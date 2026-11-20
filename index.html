@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>资源解析器 · Quantumult X</title>
+<meta name="description" content="把别家格式的订阅、分流、重写、模块翻译成 Quantumult X 认得的写法。V2RayN / Clash / Surge / Loon / Shadowrocket / SIP008 全覆盖。">
+<meta name="theme-color" content="#0b0f17">
+<link rel="icon" href="/img/qx.png">
+<style>
+  :root{
+    --bg:#0b0f17; --bg-soft:#111827; --card:#141b26; --card-2:#1a2331;
+    --line:#223042; --text:#e8eef7; --muted:#8fa1b8; --accent:#4d9aff; --accent-2:#5ce0b4;
+    --code-bg:#0e1622; --shadow:0 16px 40px rgba(0,0,0,.35);
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",Roboto,sans-serif;
+  }
+  @media (prefers-color-scheme: light){
+    :root{
+      --bg:#f7f9fc; --bg-soft:#eef2f8; --card:#ffffff; --card-2:#f4f7fb;
+      --line:#dde5ef; --text:#111c2b; --muted:#5b6b80; --accent:#1f6feb; --accent-2:#0f9d76;
+      --code-bg:#f2f5fa; --shadow:0 12px 30px rgba(21,45,80,.08);
+    }
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    line-height:1.65;-webkit-font-smoothing:antialiased;
+    background-image:radial-gradient(900px 500px at 15% -10%,rgba(77,154,255,.14),transparent 60%),
+                     radial-gradient(700px 420px at 95% 0%,rgba(92,224,180,.10),transparent 55%);
+    background-attachment:fixed;
+  }
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,pre{font-family:var(--mono)}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 20px}
+  header.top{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 82%,transparent);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+  .top .wrap{display:flex;align-items:center;gap:14px;height:60px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.2px}
+  .brand img{width:28px;height:28px;border-radius:8px}
+  .top nav{margin-left:auto;display:flex;gap:18px;font-size:14px}
+  .top nav a{color:var(--muted)}
+  .top nav a:hover{color:var(--text);text-decoration:none}
+  @media(max-width:720px){.top nav{display:none}}
+
+  .hero{padding:64px 0 36px}
+  .tagline{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--accent-2);
+    border:1px solid color-mix(in srgb,var(--accent-2) 35%,transparent);border-radius:999px;padding:5px 12px;
+    background:color-mix(in srgb,var(--accent-2) 10%,transparent)}
+  h1{font-size:clamp(26px,5vw,46px);line-height:1.2;margin:18px 0 14px;letter-spacing:-.5px}
+  h1 span{background:linear-gradient(100deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .lead{font-size:17px;color:var(--muted);max-width:660px;margin:0 0 26px}
+
+  .install{display:flex;align-items:stretch;gap:10px;flex-wrap:wrap}
+  .copybox{flex:1 1 460px;display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;
+    background:var(--code-bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+  .copybox .line{display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 6px;min-width:0}
+  .copybox .codelabel{font-family:var(--mono);font-size:13px;color:var(--muted);white-space:nowrap}
+  .copybox code{white-space:pre-wrap;word-break:keep-all;font-size:13px;line-height:1.5;color:var(--text);min-width:0}
+  @media(max-width:560px){.copybox .codelabel{display:none}}
+  .btn{appearance:none;border:1px solid transparent;border-radius:12px;padding:11px 18px;font-size:14px;
+    font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap;transition:.15s}
+  .btn-primary{background:linear-gradient(100deg,var(--accent),#3f8bf0);color:#fff;box-shadow:0 8px 20px rgba(77,154,255,.28)}
+  .btn-primary:hover{filter:brightness(1.06)}
+  .btn-ghost{background:var(--card);border-color:var(--line);color:var(--text)}
+  .btn-ghost:hover{border-color:var(--accent)}
+  .btn.copy{background:var(--card-2);border-color:var(--line);color:var(--text);padding:8px 14px;font-size:13px}
+
+  section{padding:38px 0}
+  h2{font-size:22px;margin:0 0 6px;letter-spacing:-.2px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 20px}
+  .grid{display:grid;gap:14px}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  .cols-2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:860px){.cols-3,.cols-2{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--shadow)}
+  .card h3{margin:0 0 6px;font-size:15px}
+  .card p{margin:0;color:var(--muted);font-size:13.5px}
+  .step{display:flex;gap:12px;align-items:flex-start}
+  .num{flex:0 0 26px;height:26px;border-radius:9px;background:color-mix(in srgb,var(--accent) 16%,transparent);
+    color:var(--accent);font-size:13px;font-weight:700;display:grid;place-items:center}
+
+  pre{background:var(--code-bg);border:1px solid var(--line);border-radius:14px;padding:16px 18px;overflow:auto;
+    font-size:13px;line-height:1.7;margin:0}
+  pre .k{color:var(--accent-2)}
+  pre .c{color:var(--muted)}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{font-size:13px;color:var(--muted);background:var(--card-2);border:1px solid var(--line);
+    border-radius:999px;padding:5px 12px}
+  .chip b{color:var(--text);font-weight:600}
+
+  .search{display:flex;gap:10px;margin:0 0 14px;flex-wrap:wrap}
+  .search input{flex:1 1 260px;background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:11px 14px;color:var(--text);font-size:14px;font-family:inherit;outline:none}
+  .search input:focus{border-color:var(--accent)}
+  .search input::placeholder{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:13.5px}
+  .tablewrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{position:sticky;top:0;background:var(--card-2);color:var(--muted);font-weight:600;font-size:12.5px;
+    letter-spacing:.4px;text-transform:uppercase}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:color-mix(in srgb,var(--accent) 5%,transparent)}
+  td code{color:var(--accent-2);font-size:13px;white-space:nowrap}
+  td.desc{color:var(--muted)}
+  .grouphead{margin:26px 0 10px;font-size:14px;color:var(--accent);font-weight:700;letter-spacing:.3px}
+  .none{padding:18px 14px;color:var(--muted);font-size:13.5px;display:none}
+
+  details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 18px;margin-bottom:10px}
+  details summary{cursor:pointer;font-weight:600;font-size:14.5px;list-style:none}
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"＋";color:var(--accent);margin-right:10px;font-weight:700}
+  details[open] summary::before{content:"－"}
+  details p{color:var(--muted);font-size:13.5px;margin:10px 0 0}
+  details code{color:var(--accent-2)}
+
+  footer{border-top:1px solid var(--line);margin-top:30px;padding:26px 0 40px;color:var(--muted);font-size:13px}
+  footer .wrap{display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+  footer .sp{margin-left:auto}
+  .toast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,20px);opacity:0;pointer-events:none;
+    background:var(--card);border:1px solid var(--line);color:var(--text);padding:10px 18px;border-radius:12px;
+    font-size:13.5px;box-shadow:var(--shadow);transition:.2s;z-index:50}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand"><img src="/img/qx.png" alt="">资源解析器</div>
+    <nav>
+      <a href="#start">安装</a>
+      <a href="#formats">支持的格式</a>
+      <a href="#params">参数速查</a>
+      <a href="#faq">常见问题</a>
+      <a href="https://github.com/MinimaxFlora/QuantumultX" target="_blank" rel="noopener">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="hero">
+    <div class="tagline">Quantumult X 自定义资源解析器</div>
+    <h1>让 QX <span>读懂别家的订阅</span><br>节点、分流、重写一次转好</h1>
+    <p class="lead">V2RayN、Clash、Surge、Loon、Shadowrocket、SIP008、Hysteria2 的订阅与规则，交给它统一翻译成 Quantumult X 的写法。转换规则可以按关键词筛、按正则改、按策略组分配，全都写在链接的参数里。</p>
+
+    <div class="install">
+      <div class="copybox">
+        <div class="line">
+          <span class="codelabel">resource_parser_url =</span>
+          <code id="parser-url">https://qx.tatalvpai.vip<wbr>/Scripts<wbr>/resource-parser.js</code>
+        </div>
+        <button class="btn copy" data-copy="resource_parser_url = https://qx.tatalvpai.vip/Scripts/resource-parser.js">复制</button>
+      </div>
+      <a class="btn btn-primary" href="/Scripts/resource-parser.js" target="_blank" rel="noopener">查看脚本</a>
+      <a class="btn btn-ghost" href="https://github.com/MinimaxFlora/QuantumultX" target="_blank" rel="noopener">GitHub 仓库</a>
+    </div>
+  </div>
+
+  <section id="start">
+    <h2>安装</h2>
+    <p class="sub">三步装好，之后所有资源引用都能用上解析器。</p>
+    <div class="grid cols-3">
+      <div class="card step">
+        <div class="num">1</div>
+        <div>
+          <h3>写进配置文件</h3>
+          <p>在 QX 配置的 <code>[general]</code> 段落里加一行 <code>resource_parser_url = …</code>，地址见上方复制按钮。</p>
+        </div>
+      </div>
+      <div class="card step">
+        <div class="num">2</div>
+        <div>
+          <h3>勾上「使用解析器」</h3>
+          <p>进「资源引用」，编辑要用的节点订阅、分流、重写，把「使用解析器」打开。</p>
+        </div>
+      </div>
+      <div class="card step">
+        <div class="num">3</div>
+        <div>
+          <h3>刷新资源</h3>
+          <p>下拉刷新引用；若提示「没有自定义解析器」，长按首页右下角图标点左侧刷新，再彻底退出 App 重进。</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grouphead">带参数怎么用</div>
+    <pre><span class="c">// 参数跟在订阅地址的 # 后面，多个用 &amp; 连接</span>
+https://你的订阅地址<span class="k">#emoji=1&amp;udp=1&amp;in=香港+台湾&amp;rename=旧名@新名</span>
+
+<span class="c">// 本地 / iCloud 里的规则文件同样支持（build 951 起），路径上的参数优先</span>
+<span class="c">// 特殊字符先 URL-Encode：+ → %2B，空格 → %20，@ → %40，&amp; → %26，, → %2C</span></pre>
+  </section>
+
+  <section id="formats">
+    <h2>支持的格式</h2>
+    <p class="sub">节点、规则、重写三类输入，自动识别类型，也可用 <code>type=</code> 强制指定。</p>
+    <div class="chips">
+      <span class="chip"><b>节点</b> V2RayN</span>
+      <span class="chip"><b>节点</b> Shadowsocks / SSR</span>
+      <span class="chip"><b>节点</b> ShadowsocksD / SSD</span>
+      <span class="chip"><b>节点</b> VMess / VLESS（含 REALITY）</span>
+      <span class="chip"><b>节点</b> Trojan</span>
+      <span class="chip"><b>节点</b> Hysteria2</span>
+      <span class="chip"><b>节点</b> AnyTLS</span>
+      <span class="chip"><b>节点</b> HTTP(S) / SOCKS</span>
+      <span class="chip"><b>节点</b> Quantumult / Quantumult X</span>
+      <span class="chip"><b>节点</b> Surge</span>
+      <span class="chip"><b>节点</b> Clash</span>
+      <span class="chip"><b>节点</b> Shadowrocket</span>
+      <span class="chip"><b>节点</b> Loon</span>
+      <span class="chip"><b>节点</b> SIP008</span>
+      <span class="chip"><b>规则</b> QX filter</span>
+      <span class="chip"><b>规则</b> Surge rule-set</span>
+      <span class="chip"><b>规则</b> Clash rule-provider</span>
+      <span class="chip"><b>规则</b> domain-set</span>
+      <span class="chip"><b>规则</b> JSON 规则集</span>
+      <span class="chip"><b>重写</b> QX rewrite</span>
+      <span class="chip"><b>重写</b> Surge module</span>
+      <span class="chip"><b>重写</b> url-regex</span>
+      <span class="chip"><b>重写</b> Map Local</span>
+      <span class="chip"><b>重写</b> json-jq</span>
+      <span class="chip"><b>重写</b> Loon plugin</span>
+    </div>
+  </section>
+
+  <section id="params">
+    <h2>参数速查</h2>
+    <p class="sub">全部参数都在这里，输入关键词可以过滤。</p>
+    <div class="search">
+      <input id="q" type="search" placeholder="搜参数，例如 emoji、rename、policy、udp…" autocomplete="off">
+    </div>
+
+    <div class="grouphead">一 · 节点订阅参数</div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:210px">参数</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td><code>emoji=1 / -1 / 2</code></td><td class="desc">节点名加或去地区旗帜，国行设备用 2</td></tr>
+          <tr><td><code>udp=1 / -1</code></td><td class="desc">批量开或关 udp-relay</td></tr>
+          <tr><td><code>tfo=1 / -1</code></td><td class="desc">批量开或关 fast-open</td></tr>
+          <tr><td><code>uot=1</code></td><td class="desc">SS(R) 打开 udp-over-tcp</td></tr>
+          <tr><td><code>cert=1 / -1 / 域名</code></td><td class="desc">开或关 TLS 证书校验；填域名时作为 tls-verification 的校验域名（938+）</td></tr>
+          <tr><td><code>csha=xxx</code></td><td class="desc">指定 tls-cert-sha256</td></tr>
+          <tr><td><code>psha=xxx</code></td><td class="desc">指定 tls-pubkey-sha256</td></tr>
+          <tr><td><code>alpn=xxx</code></td><td class="desc">指定 over-tls 节点的 alpn</td></tr>
+          <tr><td><code>tls13=1 / -1</code></td><td class="desc">开或关 tls13</td></tr>
+          <tr><td><code>tsession=0/1/2</code></td><td class="desc">0、1 关闭 session-ticket 或 reuse，2 两个都关（771+）</td></tr>
+          <tr><td><code>aead=-1</code></td><td class="desc">关闭 vmess 的 AEAD</td></tr>
+          <tr><td><code>in=关键词</code></td><td class="desc">按节点名保留，<code>+</code> 表示或、<code>.</code> 表示与</td></tr>
+          <tr><td><code>out=关键词</code></td><td class="desc">按节点名删除，写法同 in</td></tr>
+          <tr><td><code>regex=正则</code></td><td class="desc">按节点完整信息（类型、端口、加密方式…）正则保留</td></tr>
+          <tr><td><code>regout=正则</code></td><td class="desc">按完整信息正则删除</td></tr>
+          <tr><td><code>rename=旧@新</code></td><td class="desc">重命名，支持「旧名@新名」「前缀@」「@后缀」，多组用 <code>+</code> 连接；结尾加 ☠️ 表示删除该字段</td></tr>
+          <tr><td><code>rrname=…</code></td><td class="desc">同 rename，但排在 emoji 之后执行</td></tr>
+          <tr><td><code>replace=正则@替换</code></td><td class="desc">对节点字段做正则替换，改名、改加密方式都能用</td></tr>
+          <tr><td><code>delreg=正则</code></td><td class="desc">按正则从节点名里删内容（容易误伤，慎用）</td></tr>
+          <tr><td><code>sfilter=base64</code></td><td class="desc">传一段 base64 脚本做自定义过滤</td></tr>
+          <tr><td><code>srename=base64</code></td><td class="desc">传一段 base64 脚本做自定义重命名</td></tr>
+          <tr><td><code>ptn=1-8</code></td><td class="desc">节点名里的英文换成花漾字，8 种样式</td></tr>
+          <tr><td><code>npt=1-8</code></td><td class="desc">节点名里的数字换成花漾字，8 种样式</td></tr>
+          <tr><td><code>cap=1</code></td><td class="desc">节点名首字母大写</td></tr>
+          <tr><td><code>suffix=1 / -1</code></td><td class="desc">给节点名加类型后缀或前缀</td></tr>
+          <tr><td><code>sort=1/-1/x/规则</code></td><td class="desc">按名字正序、倒序、随机排序，也可写 <code>HK&gt;SG&gt;JP</code> 这种优先顺序</td></tr>
+          <tr><td><code>sortx=1 / -1</code></td><td class="desc">按订阅分组（tag）正序或倒序</td></tr>
+          <tr><td><code>checkurl=xxx</code></td><td class="desc">指定 server_check_url</td></tr>
+          <tr><td><code>host=xxx</code></td><td class="desc">改已有 host；想新增 host 就在结尾加 ☠️</td></tr>
+          <tr><td><code>obfs=vhttp/shttp</code></td><td class="desc">强指 shadowsocks-http 或 vmess-http</td></tr>
+          <tr><td><code>relay=策略名</code></td><td class="desc">把落地节点订阅转成 ip / host 规则，用来做代理链</td></tr>
+          <tr><td><code>flow=到期:总GB:已用</code></td><td class="desc">手工补流量信息，如 <code>flow=2026-12-31:1000:54</code></td></tr>
+          <tr><td><code>info=1</code></td><td class="desc">用通知显示机场流量与到期时间</td></tr>
+          <tr><td><code>UA=1</code></td><td class="desc">换 Shadowrocket 的 UA 再拉一次订阅</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grouphead">二 · 重写 / 分流参数</div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:210px">参数</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td><code>in / out</code></td><td class="desc">按关键词保留或删除 rewrite、filter 条目</td></tr>
+          <tr><td><code>regex / regout</code></td><td class="desc">同上，用正则匹配</td></tr>
+          <tr><td><code>inhn=xxx</code></td><td class="desc">按 hostname 保留</td></tr>
+          <tr><td><code>outhn=xxx</code></td><td class="desc">按 hostname 删除</td></tr>
+          <tr><td><code>policy=xxx</code></td><td class="desc">指定策略组；解析 Surge rule-set 时用它生成策略组</td></tr>
+          <tr><td><code>pset=正则@策略</code></td><td class="desc">同一份规则里不同关键词分别给不同策略组，多组用 <code>+</code></td></tr>
+          <tr><td><code>replace=正则@新正则</code></td><td class="desc">对重写、分流正文做替换</td></tr>
+          <tr><td><code>dst=rewrite / filter</code></td><td class="desc">把 module 强制当重写、把 rule-set 强制当分流</td></tr>
+          <tr><td><code>cdn=1</code></td><td class="desc">把 github 脚本地址换成 fastly.jsdelivr.net/gh 镜像</td></tr>
+          <tr><td><code>fcr=1/2/3</code></td><td class="desc">给规则加 force-cellular / multi-interface / 负载均衡</td></tr>
+          <tr><td><code>via=接口</code></td><td class="desc">给规则加 via-interface，填 0 表示 %TUN%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="grouphead">三 · 通用参数</div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th style="width:210px">参数</th><th>作用</th></tr></thead>
+        <tbody>
+          <tr><td><code>ntf=0 / 1</code></td><td class="desc">关或开解析通知，重写与分流默认开、节点默认关</td></tr>
+          <tr><td><code>type=…</code></td><td class="desc">domain-set / rule / module / list / nodes，自动识别失败时强制指定</td></tr>
+          <tr><td><code>hide=0</code></td><td class="desc">被筛掉的条目改成注释保留，而不是直接删掉</td></tr>
+          <tr><td><code>profile=111</code></td><td class="desc">用 URI-Scheme 一次性导入配置里的远程资源，三位分别代表 服务器 / 分流 / 重写</td></tr>
+          <tr><td><code>dbg=1</code></td><td class="desc">调试模式，把中间结果打进通知</td></tr>
+          <tr><td><code>cnt=1</code></td><td class="desc">通知里显示解析后的条目数量</td></tr>
+          <tr><td><code>$type0-7</code></td><td class="desc">占位符：节点类型，8 种花漾样式，从「𝐬𝐬」到「ˢˢ」</td></tr>
+          <tr><td><code>$index0-8</code></td><td class="desc">占位符：节点序号，9 种样式，从 1 到 𝟷</td></tr>
+          <tr><td><code>$emoji1/2</code></td><td class="desc">占位符：节点名里的地区旗帜</td></tr>
+          <tr><td><code>$tag</code></td><td class="desc">占位符：订阅的 tag，后面可跟数字指定花漾样式</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="none" id="noresult">没有匹配的参数，换个关键词试试。</div>
+  </section>
+
+  <section id="faq">
+    <h2>常见问题</h2>
+    <p class="sub">装不上、转不对，多半是下面几种情况。</p>
+
+    <details>
+      <summary>提示「没有自定义解析器」怎么办？</summary>
+      <p>说明 QX 还没拉到脚本。确认配置文件那行写的是 <code>resource_parser_url = https://qx.tatalvpai.vip/Scripts/resource-parser.js</code>，然后长按首页右下角图标，点左侧的刷新按钮更新资源，再从后台彻底退出 App 重进，直到资源页出现解析器说明。</p>
+    </details>
+
+    <details>
+      <summary>节点转出来是空的，或者少了几条？</summary>
+      <p>先在链接后加 <code>cnt=1</code>，通知里会告诉你最终条目数；再加 <code>type=nodes</code> 强制按节点解析。如果通知里写明「不支持的节点」，那是协议本身 QX 还不支持（例如部分传输方式的 VLESS、gRPC、mKCP）。</p>
+    </details>
+
+    <details>
+      <summary>分流规则全都丢了？</summary>
+      <p>检查是不是给规则资源勾了错误的类型：rule-set 想转成分流需要 <code>dst=filter</code>；如果是 module，那本身该走重写。另外 <code>in=</code> 写错关键词会把规则全筛掉，加 <code>hide=0</code> 可以把被筛掉的条目以注释形式留住，方便对照。</p>
+    </details>
+
+    <details>
+      <summary>订阅更新后策略组名字变成 Minimax 了？</summary>
+      <p>解析 Surge rule-set 时若规则本身没带策略，解析器会给一个默认策略组名 <code>Minimax</code>。想用别的名字，加 <code>policy=你的策略组</code>。</p>
+    </details>
+
+    <details>
+      <summary>参数里的 + &amp; @ 老是出错？</summary>
+      <p>这三个字符在 URL 里有特殊含义，写进参数前要编码：<code>+</code> → <code>%2B</code>，空格 → <code>%20</code>，<code>&amp;</code> → <code>%26</code>，<code>@</code> → <code>%40</code>，<code>,</code> → <code>%2C</code>。中文关键词直接写没问题，但建议也一并编码。</p>
+    </details>
+
+    <details>
+      <summary>能不能只转某个机场的部分节点？</summary>
+      <p>可以。用 <code>in=香港+台湾</code> 按名字保留，或 <code>regex=iplc</code> 按线路特征保留，再配合 <code>rename=</code> 统一改名。<code>sort=1</code> 可以让节点按名字排好。</p>
+    </details>
+  </section>
+
+  <section id="about">
+    <h2>关于</h2>
+    <p class="sub">这是一个长期维护的个人项目。</p>
+    <div class="grid cols-2">
+      <div class="card">
+        <h3>来源</h3>
+        <p>由 KOP-XIAO 的资源解析器改写而来，功能保持一致；注释、链接、默认策略名都已换成本项目自己的。内嵌的 Base64 与 YAML 实现保留上游许可声明。</p>
+      </div>
+      <div class="card">
+        <h3>反馈</h3>
+        <p>解析结果不对，去 <a href="https://github.com/MinimaxFlora/QuantumultX/issues" target="_blank" rel="noopener">GitHub 提 issue</a>，附上订阅类型、链接参数和通知里的报错内容即可，不要贴带 token 的完整订阅地址。</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>资源解析器 · Quantumult X</span>
+    <span class="sp"><a href="https://github.com/MinimaxFlora/QuantumultX" target="_blank" rel="noopener">github.com/MinimaxFlora/QuantumultX</a></span>
+  </div>
+</footer>
+
+<div class="toast" id="toast">已复制</div>
+
+<script>
+  // 复制按钮：优先用剪贴板 API，失败退回 execCommand
+  document.querySelectorAll('[data-copy]').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy');
+      var done = function () { showToast('已复制到剪贴板'); };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done, function () { legacyCopy(text, done); });
+      } else { legacyCopy(text, done); }
+    });
+  });
+
+  function legacyCopy(text, done) {
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); done(); } catch (e) { showToast('复制失败，请手动选择'); }
+    document.body.removeChild(ta);
+  }
+
+  var toastTimer;
+  function showToast(msg) {
+    var t = document.getElementById('toast');
+    t.textContent = msg; t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1800);
+  }
+
+  // 参数过滤：按行匹配，空分组自动隐藏表头无意义
+  var input = document.getElementById('q');
+  var rows = Array.prototype.slice.call(document.querySelectorAll('#params tbody tr'));
+  var tables = Array.prototype.slice.call(document.querySelectorAll('#params .tablewrap'));
+  var heads = Array.prototype.slice.call(document.querySelectorAll('#params .grouphead'));
+  var none = document.getElementById('noresult');
+
+  input.addEventListener('input', function () {
+    var kw = input.value.trim().toLowerCase();
+    var visible = 0;
+    rows.forEach(function (row) {
+      var hit = !kw || row.textContent.toLowerCase().indexOf(kw) !== -1;
+      row.style.display = hit ? '' : 'none';
+      if (hit) visible++;
+    });
+    tables.forEach(function (table) {
+      var any = Array.prototype.slice.call(table.querySelectorAll('tbody tr')).some(function (r) { return r.style.display !== 'none'; });
+      table.style.display = any ? '' : 'none';
+      var head = table.previousElementSibling;
+      if (head && head.classList.contains('grouphead')) head.style.display = any ? '' : 'none';
+    });
+    none.style.display = visible ? 'none' : 'block';
+  });
+</script>
+
+</body>
+</html>

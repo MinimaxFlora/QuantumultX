@@ -47,6 +47,8 @@ Scripts/_headers 等          Pages 部署配置（_headers、_redirects、404.h
 
 ## 说明
 
-本解析器由 [KOP-XIAO](https://github.com/KOP-XIAO/QuantumultX) 的资源解析器改写而来，功能保持一致；注释、链接、默认策略组名（`Minimax`）均已替换为本项目自己的，代码逻辑未做改动。文件内嵌的 Base64 与 YAML 实现保留上游许可声明。
+本解析器由 [KOP-XIAO](https://github.com/KOP-XIAO/QuantumultX) 的资源解析器改写而来，功能保持一致；注释、链接、默认策略组名（`Minimax`）均已替换为本项目自己的。文件内嵌的 Base64 与 YAML 实现保留上游许可声明。
+
+相对上游只修补了一处：把订阅链接填进错误类型的资源（例如把节点订阅加到重写引用）时，上游会在「跳转到正确类型」的分支里抛异常、只剩空结果；这里先把检测到的类型归一到 `server` / `filter` / `rewrite` 再跳转，通知正常给出可点的添加入口。
 
 解析结果不对时请到 [Issues](https://github.com/MinimaxFlora/QuantumultX/issues) 反馈，附上订阅类型、链接参数和通知里的报错内容；不要把带 token 的完整订阅地址贴出来。

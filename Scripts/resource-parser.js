@@ -103,8 +103,10 @@
  * --------------------------------------------------------------------------
  * 说明
  * --------------------------------------------------------------------------
- * 本解析器由 KOP-XIAO 的资源解析器改写而来，功能保持一致；注释、链接、默认策略名
+ * 本解析器由 KOP-XIAO 的资源解析器改写而来，功能保持一致；注释、链接、默认策略组名
  * 都已替换为本项目自己的。内嵌的 Base64 与 YAML 实现保留上游许可声明。
+ * 相对上游只修补了一处：把链接填错资源类型时，跳转「正确类型」的分支原本会抛异常，
+ * 现在会正常给出可点击的跳转通知。
  */
 
  
@@ -862,8 +864,11 @@ function Parser() {
     }
     }
   } else if (type0 == "wrong-field"){
-    if (version >= 670 && typec!="") {  
-      RLink0[Field[typec]].push($resource.link+", opt-parser=true, tag=下次添加资源🉑️长点❤️8⃣️")  
+    // 修上游遗留：typec 带 server-b64 / filter-list 这类后缀，直接查 Field 会取到 undefined。
+    // 先归一到基础类型，才能在类型填错时正常跳转，而不是整个解析抛异常。
+    var typecBase = /^server/i.test(typec) ? "server" : /^(filter|Clash-Provider)/i.test(typec) ? "filter" : /^rewrite/i.test(typec) ? "rewrite" : "";
+    if (version >= 670 && typecBase) {  
+      RLink0[Field[typecBase]].push($resource.link+", opt-parser=true, tag=下次添加资源🉑️长点❤️8⃣️")  
       var flink = ADDRes.replace(/url-encoded-json/,encodeURIComponent(JSON.stringify(RLink0)))
       const bug_linkx = { "open-url": flink, "media-url": "https://qx.tatalvpai.vip/img/bug.png" }  
     $notify( "⚠️ 请点击通知跳转尝试添加到正确类型中","❌ 检测类型["+typec+"]"+"与填入类型"+"["+typeQ+"]冲突", "如果跳转添加仍旧失败，请发送链接反馈解析器bot\n"+$resource.link, bug_linkx)

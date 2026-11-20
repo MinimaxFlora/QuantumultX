@@ -1,0 +1,9 @@
+{
+  "name": "qx-parser-tools",
+  "private": true,
+  "version": "1.0.0",
+  "description": "资源解析器的重建与等价性验证脚本",
+  "dependencies": {
+    "acorn": "^8.15.0"
+  }
+}

@@ -61,6 +61,7 @@
  * suffix=1 / -1       给节点名加类型后缀或前缀
  * sort=1/-1/x/规则    按名字正序、倒序、随机排序，也可写 HK>SG>JP 这种优先顺序
  * sortx=1 / -1        按订阅分组（tag）正序或倒序
+ * del=1               重名节点直接删掉，而不是自动加序号改名
  * checkurl=xxx        指定 server_check_url
  * host=xxx            改已有 host；想新增 host 就在结尾加 ☠️
  * obfs=vhttp/shttp    强指 shadowsocks-http 或 vmess-http
